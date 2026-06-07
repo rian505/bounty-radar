@@ -9,6 +9,7 @@ from typing import Optional
 
 from . import __version__
 from .sources import Bounty, ENDPOINTS, fetch_all
+from .state import DEFAULT_STATE, split_new, save_seen
 
 
 def _fmt_usd(amount: Optional[int]) -> str:
@@ -97,6 +98,14 @@ def build_parser() -> argparse.ArgumentParser:
                    help="emit JSON instead of a table")
     p.add_argument("--timeout", type=int, default=30,
                    help="per-request timeout in seconds")
+    p.add_argument("--new-only", action="store_true",
+                   help="show only targets not seen on a previous run "
+                        "(compares against the state file)")
+    p.add_argument("--save-state", action="store_true",
+                   help="persist the current target set as 'seen' "
+                        "(use with --new-only in a cron job)")
+    p.add_argument("--state-file", metavar="PATH", default=str(DEFAULT_STATE),
+                   help=f"state file for --new-only (default: {DEFAULT_STATE})")
     return p
 
 
@@ -110,6 +119,17 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"warning: {src} failed: {err}", file=sys.stderr)
 
     rows = [b for b in bounties if _matches(b, args)]
+
+    # Change-detection: keep only targets not seen on a previous run.
+    from pathlib import Path as _Path
+    state_path = _Path(args.state_file)
+    if args.new_only:
+        rows, all_ids = split_new(rows, state_path)
+    if args.save_state:
+        # Persist the *currently matching* set so the next run diffs against it.
+        from .state import identity, load_seen
+        ids = {identity(b) for b in [b for b in bounties if _matches(b, args)]}
+        save_seen(ids | load_seen(state_path), state_path)
 
     if args.sort == "reward":
         rows.sort(key=lambda b: b.max_reward_usd or -1, reverse=True)

@@ -51,6 +51,20 @@ bounty-radar --json | jq '.[] | select(.max_reward_usd > 5000000)'
 | `--limit N` | Max rows (default 30, `0` = all). |
 | `--json` | Emit JSON instead of a table. |
 
+### Watch mode (change detection)
+
+Track which targets you've already seen and surface only new ones — ideal for a cron alert:
+
+```bash
+# First run: record the current set as "seen"
+bounty-radar --new-only --save-state
+
+# Later runs: only print targets that appeared since
+bounty-radar --new-only --save-state
+```
+
+State lives at `~/.bounty-radar-seen.json` (override with `--state-file` or the `BOUNTY_RADAR_STATE` env var). Combine with `--json` to feed a notifier.
+
 ## Sample output
 
 ```
