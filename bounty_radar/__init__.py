@@ -5,4 +5,4 @@ and Sherlock, normalises them into a single schema, and lets you filter by
 status, payout, language/ecosystem, and KYC requirement.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

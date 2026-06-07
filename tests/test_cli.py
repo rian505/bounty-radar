@@ -64,6 +64,27 @@ def test_kind_filter(monkeypatch, capsys):
     assert "Sky" not in out
 
 
+def test_ending_soon_filter(monkeypatch, capsys):
+    # Morpho ends 2026-06-12; with a far-future end it should appear only
+    # when the window is wide enough. Use a contest ending in ~2 days.
+    import datetime as dt
+    soon = (dt.datetime.now(tz=dt.timezone.utc)
+            + dt.timedelta(days=2)).isoformat()
+    far = (dt.datetime.now(tz=dt.timezone.utc)
+           + dt.timedelta(days=60)).isoformat()
+    sample = [
+        Bounty("cantina", "SoonContest", "contest", "live", 100000, [], [],
+               None, None, soon, "https://x/soon"),
+        Bounty("sherlock", "FarContest", "contest", "live", 100000, [], [],
+               None, None, far, "https://x/far"),
+    ]
+    monkeypatch.setattr(cli, "fetch_all", lambda *a, **k: (sample, {}))
+    cli.main(["--ending-soon", "7"])
+    out = capsys.readouterr().out
+    assert "SoonContest" in out
+    assert "FarContest" not in out
+
+
 def test_json_output(monkeypatch, capsys):
     _patch(monkeypatch)
     cli.main(["--json"])

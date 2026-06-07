@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bounty-radar"
-version = "0.1.0"
+version = "0.2.0"
 description = "Aggregate live crypto bug-bounty and audit-contest targets from Immunefi, Code4rena, Cantina, and Sherlock into one filterable view."
 readme = "README.md"
 requires-python = ">=3.9"

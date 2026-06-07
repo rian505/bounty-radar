@@ -50,6 +50,7 @@ bounty-radar --json | jq '.[] | select(.max_reward_usd > 5000000)'
 | `--min USD` | Minimum max-reward in USD. |
 | `--lang LANG` | Substring match on language (e.g. `solidity`, `rust`). |
 | `--kind K` | `bounty` (ongoing) or `contest` (time-boxed). |
+| `--ending-soon DAYS` | Only targets ending within `DAYS` days (great for catching contest deadlines). |
 | `--no-kyc` | Exclude programs that require KYC. |
 | `--sort KEY` | `reward` (default), `ends`, or `name`. |
 | `--limit N` | Max rows (default 30, `0` = all). |
@@ -93,6 +94,8 @@ All four feeds are public and require no authentication:
 | Sherlock | `https://audits.sherlock.xyz/api/contests` |
 
 If a feed is down or changes shape, that source is skipped with a warning — the rest still work.
+
+> **Note on `language`:** Immunefi exposes a structured language field; the contest platforms (Code4rena, Cantina, Sherlock) do not, so `bounty-radar` *infers* language from the scope text using word-boundary keyword matching. Treat it as a hint and confirm on the program page.
 
 ## Development
 

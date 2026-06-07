@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import json
+import re
 import urllib.request
 import urllib.error
 from dataclasses import dataclass, asdict
@@ -87,6 +88,31 @@ def _as_list(value: Any) -> list[str]:
     return [str(value)]
 
 
+# Best-effort language detection from free-text scope/description.
+# These feeds expose no structured language field, so we scan the text for
+# well-known smart-contract languages using WORD-BOUNDARY matching (so "rust"
+# doesn't match "trust" and "move" doesn't match "remove"). This is a
+# heuristic hint, not ground truth — always confirm on the program page.
+_LANG_PATTERNS = {
+    "Solidity": (r"solidity", r"\bevm\b", r"erc-?20", r"erc-?4626",
+                 r"erc-?721", r"ethereum virtual machine"),
+    "Rust": (r"\brust\b", r"\banchor\b", r"solana program", r"cosmwasm"),
+    "Move": (r"\bmove\b", r"\baptos\b", r"\bsui\b"),
+    "Vyper": (r"\bvyper\b",),
+    "Cairo": (r"\bcairo\b", r"starknet"),
+    "Go": (r"\bgolang\b", r"cosmos sdk"),
+}
+
+
+def _infer_languages(*texts: Any) -> list[str]:
+    blob = " ".join(t for t in texts if isinstance(t, str)).lower()
+    if not blob:
+        return []
+    found = [lang for lang, pats in _LANG_PATTERNS.items()
+             if any(re.search(p, blob) for p in pats)]
+    return found
+
+
 def _now() -> _dt.datetime:
     return _dt.datetime.now(tz=_dt.timezone.utc)
 
@@ -144,14 +170,15 @@ def from_code4rena(raw: dict) -> list[Bounty]:
     for a in audits:
         slug = a.get("slug", "")
         raw_status = str(a.get("status", ""))
+        league = a.get("league")
         out.append(Bounty(
             source="code4rena",
             name=str(a.get("title", "?")),
             kind="contest",
             status=status_map.get(raw_status, "ended"),
             max_reward_usd=_parse_usd(a.get("formattedAmount")),
-            languages=[],
-            ecosystems=[],
+            languages=_infer_languages(a.get("title"), a.get("details")),
+            ecosystems=[str(league)] if league else [],
             kyc=None,
             starts_at=a.get("startTime"),
             ends_at=a.get("endTime"),
@@ -167,15 +194,16 @@ def from_cantina(raw: Any) -> list[Bounty]:
         tf = c.get("timeframe", {}) or {}
         raw_status = str(c.get("status", "")).lower()
         status = {"live": "live", "upcoming": "upcoming"}.get(raw_status, "ended")
+        kyc = c.get("kycRequired")
         out.append(Bounty(
             source="cantina",
             name=str(c.get("name", "?")),
             kind="contest",
             status=status,
             max_reward_usd=_parse_usd(c.get("totalRewardPot")),
-            languages=[],
+            languages=_infer_languages(c.get("name"), c.get("instructions")),
             ecosystems=[],
-            kyc=None,
+            kyc=kyc if isinstance(kyc, bool) else None,
             starts_at=tf.get("start"),
             ends_at=tf.get("end"),
             url=c.get("url") or "https://cantina.xyz/competitions",
@@ -204,7 +232,7 @@ def from_sherlock(raw: Any) -> list[Bounty]:
             kind="contest",
             status=status,
             max_reward_usd=_parse_usd(s.get("rewards") or s.get("prize_pool")),
-            languages=[],
+            languages=_infer_languages(s.get("title"), s.get("short_description")),
             ecosystems=[],
             kyc=None,
             starts_at=starts,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import json
 import sys
 from typing import Optional
@@ -39,6 +40,16 @@ def _matches(b: Bounty, args: argparse.Namespace) -> bool:
             return False
     if args.kind and b.kind != args.kind:
         return False
+    if args.ending_soon is not None:
+        if not b.ends_at:
+            return False
+        try:
+            end = _dt.datetime.fromisoformat(b.ends_at.replace("Z", "+00:00"))
+        except ValueError:
+            return False
+        days_left = (end - _dt.datetime.now(tz=_dt.timezone.utc)).total_seconds() / 86400
+        if days_left < 0 or days_left > args.ending_soon:
+            return False
     return True
 
 
@@ -88,6 +99,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="substring match on language (e.g. solidity, rust)")
     p.add_argument("--kind", choices=["bounty", "contest"],
                    help="only ongoing bounties or time-boxed contests")
+    p.add_argument("--ending-soon", type=float, metavar="DAYS",
+                   help="only targets ending within DAYS days (contests)")
     p.add_argument("--no-kyc", action="store_true",
                    help="exclude programs that require KYC")
     p.add_argument("--sort", choices=["reward", "ends", "name"],
