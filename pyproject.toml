@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bounty-radar"
+version = "0.1.0"
+description = "Aggregate live crypto bug-bounty and audit-contest targets from Immunefi, Code4rena, Cantina, and Sherlock into one filterable view."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "rian505" }]
+keywords = ["bug-bounty", "security", "crypto", "audit", "immunefi", "code4rena", "sherlock", "cantina"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Security",
+    "Environment :: Console",
+]
+dependencies = []  # stdlib only — zero runtime deps
+
+[project.urls]
+Homepage = "https://github.com/rian505/bounty-radar"
+Issues = "https://github.com/rian505/bounty-radar/issues"
+
+[project.scripts]
+bounty-radar = "bounty_radar.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+include = ["bounty_radar*"]
