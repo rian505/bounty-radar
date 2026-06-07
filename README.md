@@ -1,5 +1,9 @@
 # bounty-radar
 
+[![CI](https://github.com/rian505/bounty-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/rian505/bounty-radar/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/bounty-radar.svg)](https://pypi.org/project/bounty-radar/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 One command to see every live crypto bug-bounty and audit contest worth your time — pulled straight from the platforms that actually pay.
 
 `bounty-radar` aggregates the public feeds of **Immunefi**, **Code4rena**, **Cantina**, and **Sherlock**, normalises them into a single schema, and lets you filter by status, payout, language, and KYC requirement. Zero runtime dependencies (Python stdlib only), no API keys, no scraping.
